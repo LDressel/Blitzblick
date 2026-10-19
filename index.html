@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blitzblick Herbst</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<style>
+/* Layout: one-screen whiteboard app — large square card (pastel, turquoise frame like printed Blitzblick cards), hint line and teacher controls below */
+:root {
+  margin: 0;
+  --sky: #E7EDEE;          /* page ground: pale autumn sky */
+  --ink: #2A2420;          /* outlines + text */
+  --ink-soft: #5E5650;
+  --frame: #63C5C3;        /* turquoise card frame */
+  --pumpkin: #DC6E2A;      /* card back + accent */
+  --pumpkin-deep: #B8541A;
+  --chip: #FFFFFF;
+  --chip-on: #2F6F6E;
+  --font: "Andika", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--sky);
+  color: var(--ink);
+  font-family: var(--font);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.deco { position: fixed; pointer-events: none; opacity: .55; z-index: 0; }
+.deco svg { display: block; }
+header, .stage, .hint, .controls { position: relative; z-index: 1; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h1 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: .01em; color: var(--ink); text-wrap: balance; }
+h1 span { color: var(--pumpkin-deep); }
+
+.stage { flex: 1; min-height: 0; container-type: size; display: grid; place-items: center; cursor: pointer; }
+.card {
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+  perspective: 1800px;
+}
+.inner {
+  position: relative; width: 100%; height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .38s cubic-bezier(.4,.1,.3,1);
+}
+.inner.flipped { transform: rotateY(180deg); }
+.face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border: clamp(5px, 1.1cqmin, 10px) solid var(--frame);
+  box-sizing: border-box;
+  box-shadow: 0 6px 18px rgba(60, 50, 30, .12);
+  overflow: hidden;
+}
+.face svg { width: 100%; height: 100%; display: block; }
+.front { background: #F7E0A8; transition: background-color .2s; }
+.back { background: var(--pumpkin); transform: rotateY(180deg); }
+
+.hint {
+  text-align: center; font-size: clamp(1.1rem, 2.6vh, 1.7rem); font-weight: 700;
+  color: var(--ink-soft); min-height: 1.4em; margin: 0;
+}
+
+.controls {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 10px 18px; font-size: .95rem;
+}
+.group { display: flex; align-items: center; gap: 6px; }
+.group > .lbl { color: var(--ink-soft); font-size: .85rem; letter-spacing: .04em; text-transform: uppercase; margin-right: 2px; }
+.seg { display: flex; border: 2px solid var(--frame); border-radius: 10px; overflow: hidden; background: var(--chip); }
+.seg button, .btn {
+  font: inherit; font-weight: 700; color: var(--ink);
+  background: var(--chip); border: 0; min-height: 44px; padding: 0 14px; cursor: pointer;
+}
+.seg button + button { border-left: 2px solid var(--frame); }
+.seg button[aria-pressed="true"] { background: var(--chip-on); color: #fff; }
+.btn { border: 2px solid var(--frame); border-radius: 10px; }
+.btn:hover, .seg button:hover:not([aria-pressed="true"]) { background: #EAF6F5; }
+button:focus-visible { outline: 3px solid var(--pumpkin); outline-offset: 2px; }
+
+@media (max-width: 600px) {
+  h1 { font-size: 1.1rem; }
+  .controls { gap: 8px 10px; }
+  .seg button, .btn { padding: 0 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inner { transition: none; transform: none !important; }
+  .face { transition: opacity .15s; backface-visibility: visible; }
+  .back { transform: none; opacity: 0; }
+  .inner.flipped .back { opacity: 1; }
+  .inner.flipped .front { opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Bild-Vorlagen (Herbstmotive) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="o-leaf" viewBox="0 0 100 100">
+      <path d="M50 6 L57 26 L70 18 L66 38 L88 32 L79 49 L93 57 L71 62 L76 78 L55 69 L52 82 L48 82 L45 69 L24 78 L29 62 L7 57 L21 49 L12 32 L34 38 L30 18 L43 26 Z"
+            fill="currentColor" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M50 96 L50 22 M50 58 L27 43 M50 58 L73 43 M50 70 L31 66 M50 70 L69 66" fill="none" stroke="#2A2420" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+      <path d="M50 82 L50 96" stroke="#2A2420" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="o-acorn" viewBox="0 0 100 100">
+      <path d="M28 44 Q28 82 50 93 Q72 82 72 44 Z" fill="#D9A35B" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <ellipse cx="40" cy="62" rx="4" ry="11" fill="#fff" opacity=".35"/>
+      <path d="M20 44 Q20 20 50 20 Q80 20 80 44 Q50 52 20 44 Z" fill="#8B5A2B" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M30 30 L40 44 M42 24 L54 46 M56 23 L66 45 M68 28 L74 40 M28 40 L38 26 M40 46 L54 22 M56 46 L68 24" stroke="#5E3A18" stroke-width="1.6" opacity=".7"/>
+      <path d="M50 20 Q51 11 58 7" fill="none" stroke="#2A2420" stroke-width="4" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="o-pumpkin" viewBox="0 0 100 100">
+      <ellipse cx="33" cy="62" rx="23" ry="28" fill="#EC8126" stroke="#2A2420" stroke-width="2.5"/>
+      <ellipse cx="67" cy="62" rx="23" ry="28" fill="#EC8126" stroke="#2A2420" stroke-width="2.5"/>
+      <ellipse cx="50" cy="62" rx="19" ry="30" fill="#F59A3C" stroke="#2A2420" stroke-width="2.5"/>
+      <path d="M46 34 Q46 22 54 15 L59 19 Q53 25 54 34 Z" fill="#6B8E23" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M56 24 Q70 14 80 22 Q68 32 56 24 Z" fill="#8DB33A" stroke="#2A2420" stroke-width="2" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="o-mushroom" viewBox="0 0 100 100">
+      <path d="M38 56 Q35 88 40 93 L60 93 Q65 88 62 56 Z" fill="#F4ECD8" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M8 60 Q10 16 50 14 Q90 16 92 60 Q50 69 8 60 Z" fill="#D93A2B" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <g fill="#fff" stroke="#2A2420" stroke-width="1.2">
+        <circle cx="30" cy="38" r="5.5"/><circle cx="53" cy="28" r="6.5"/><circle cx="72" cy="42" r="5.5"/>
+        <circle cx="46" cy="50" r="4.5"/><circle cx="20" cy="53" r="3.5"/><circle cx="82" cy="55" r="3"/>
+      </g>
+    </symbol>
+    <symbol id="o-apple" viewBox="0 0 100 100">
+      <path d="M50 30 C40 22 16 24 15 49 C14 73 32 93 44 91 C48 90 52 90 56 91 C68 93 86 73 85 49 C84 24 60 22 50 30 Z"
+            fill="#D63B2F" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <ellipse cx="31" cy="48" rx="5" ry="10" fill="#fff" opacity=".35"/>
+      <path d="M50 30 Q49 18 54 9" fill="none" stroke="#5E3A18" stroke-width="4" stroke-linecap="round"/>
+      <path d="M53 20 Q66 7 78 13 Q67 27 53 20 Z" fill="#7BA83A" stroke="#2A2420" stroke-width="2" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="o-chestnut" viewBox="0 0 100 100">
+      <path d="M50 10 C72 12 89 40 87 62 C85 83 68 93 50 93 C32 93 15 83 13 62 C11 40 28 12 50 10 Z" fill="#7A3E1D" stroke="#2A2420" stroke-width="2.5"/>
+      <path d="M17 72 Q50 60 83 72 Q76 92 50 93 Q24 92 17 72 Z" fill="#D9B48A" stroke="#2A2420" stroke-width="2" stroke-linejoin="round"/>
+      <ellipse cx="36" cy="38" rx="6" ry="13" fill="#fff" opacity=".28" transform="rotate(20 36 38)"/>
+      <path d="M50 10 L50 4" stroke="#2A2420" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="o-hedgehog" viewBox="0 0 100 100">
+      <ellipse cx="34" cy="86" rx="6" ry="4" fill="#3E2A18"/>
+      <ellipse cx="62" cy="86" rx="6" ry="4" fill="#3E2A18"/>
+      <path d="M8 74 L5 58 L16 62 L13 45 L25 53 L26 35 L36 48 L42 30 L49 46 L57 32 L60 48 L70 38 L70 54 L80 52 L76 66 L70 80 Q40 92 12 82 Z"
+            fill="#6B4A2E" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M64 56 Q86 58 95 72 Q86 83 64 80 Z" fill="#E7C9A0" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="95" cy="72" r="4" fill="#2A2420"/>
+      <circle cx="79" cy="66" r="3.4" fill="#2A2420"/><circle cx="80.2" cy="64.8" r="1.1" fill="#fff"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="deco" style="top:-30px;left:-40px;transform:rotate(-25deg)"><svg width="180" height="180"><use href="#o-leaf" width="180" height="180" style="color:#E9B630"/></svg></div>
+<div class="deco" style="bottom:-40px;right:-30px;transform:rotate(35deg)"><svg width="220" height="220"><use href="#o-leaf" width="220" height="220" style="color:#D9432B"/></svg></div>
+<div class="deco" style="bottom:60px;left:-50px;transform:rotate(60deg)"><svg width="140" height="140"><use href="#o-leaf" width="140" height="140" style="color:#E8742A"/></svg></div>
+
+<header>
+  <h1>Blitzblick <span>Herbst</span></h1>
+  <button class="btn" id="fs" type="button">Vollbild</button>
+</header>
+
+<div class="stage" id="stage" role="button" tabindex="0" aria-label="Weiter">
+  <div class="card">
+    <div class="inner" id="inner">
+      <div class="face front" id="front">
+        <svg id="scene" viewBox="0 0 1000 1000" aria-hidden="true"></svg>
+      </div>
+      <div class="face back">
+        <svg id="backsvg" viewBox="0 0 1000 1000" aria-hidden="true"></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="hint" id="hint" aria-live="polite">Klick: Los geht's!</p>
+
+<div class="controls" id="controls">
+  <div class="group"><span class="lbl">Menge</span>
+    <div class="seg" data-key="max">
+      <button type="button" data-val="5">bis 5</button>
+      <button type="button" data-val="10">bis 10</button>
+    </div>
+  </div>
+  <div class="group"><span class="lbl">Zeit</span>
+    <div class="seg" data-key="time">
+      <button type="button" data-val="700">kurz</button>
+      <button type="button" data-val="1200">mittel</button>
+      <button type="button" data-val="2000">lang</button>
+    </div>
+  </div>
+  <div class="group"><span class="lbl">Bild</span>
+    <div class="seg" data-key="layout">
+      <button type="button" data-val="ordered">geordnet</button>
+      <button type="button" data-val="scatter">gestreut</button>
+    </div>
+  </div>
+  <div class="group"><span class="lbl">Danach</span>
+    <div class="seg" data-key="reveal">
+      <button type="button" data-val="on">aufdecken</button>
+      <button type="button" data-val="off">gleich weiter</button>
+    </div>
+  </div>
+  <button class="btn" id="again" type="button">Nochmal blitzen</button>
+</div>
+
+<script>
+(() => {
+  const OBJECTS = [
+    { id: 'leaf', colors: ['#E8742A', '#D9432B', '#E9B630'], tilt: 14 },
+    { id: 'acorn', tilt: 8 },
+    { id: 'pumpkin', tilt: 4 },
+    { id: 'mushroom', tilt: 4 },
+    { id: 'apple', tilt: 6 },
+    { id: 'chestnut', tilt: 10 },
+    { id: 'hedgehog', tilt: 0 },
+  ];
+  const CARD_COLORS = ['#F7E0A8', '#F6CDB4', '#E5EDB0', '#C9E6EF', '#EED8C2'];
+  const FLIP_MS = 400;
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const inner = document.getElementById('inner');
+  const front = document.getElementById('front');
+  const scene = document.getElementById('scene');
+  const hint = document.getElementById('hint');
+  const stage = document.getElementById('stage');
+
+  // ---------- Einstellungen ----------
+  const settings = { max: '10', time: '1200', layout: 'ordered', reveal: 'on' };
+  try { Object.assign(settings, JSON.parse(localStorage.getItem('blitzblick-herbst') || '{}')); } catch (e) {}
+  const save = () => { try { localStorage.setItem('blitzblick-herbst', JSON.stringify(settings)); } catch (e) {} };
+
+  document.querySelectorAll('.seg').forEach(seg => {
+    const key = seg.dataset.key;
+    const sync = () => seg.querySelectorAll('button').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.val === String(settings[key]))));
+    seg.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      settings[key] = b.dataset.val; save(); sync(); b.blur();
+      if (key === 'reveal' && state === 'hidden') setHint();
+    });
+    sync();
+  });
+
+  // ---------- Anordnungen (Koordinaten 0–1000) ----------
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  function dice(n) {
+    const a = 240, b = 500, c = 760;
+    const P = {
+      1: [[b, b]], 2: [[a, a], [c, c]], 3: [[a, a], [b, b], [c, c]],
+      4: [[a, a], [c, a], [a, c], [c, c]], 5: [[a, a], [c, a], [b, b], [a, c], [c, c]],
+      6: [[a, a], [a, b], [a, c], [c, a], [c, b], [c, c]],
+    };
+    const mirror = Math.random() < .5;
+    return P[n].map(([x, y]) => ({ x: mirror ? 1000 - x : x, y, s: 230 }));
+  }
+
+  // Reihen, linksbündig (wie im Zehnerfeld)
+  function grid(rows) {
+    rows = rows.filter(r => r > 0);
+    const cols = Math.max(...rows);
+    const sp = Math.min(260, 920 / cols);
+    const s = sp * 0.9;
+    const x0 = 500 - (cols * sp) / 2 + sp / 2;
+    const vsp = Math.max(sp, 210);
+    const y0 = 500 - ((rows.length - 1) * vsp) / 2;
+    const out = [];
+    rows.forEach((count, r) => {
+      for (let i = 0; i < count; i++) out.push({ x: x0 + i * sp, y: y0 + r * vsp, s });
+    });
+    return out;
+  }
+  const fiveRows = n => grid(n <= 5 ? [n] : [5, n - 5]);
+  const pairs = n => { const c = Math.ceil(n / 2); return grid([c, n - c]); };
+
+  function scatter(n) {
+    const s = n <= 4 ? 210 : n <= 7 ? 175 : 155;
+    const minD = s * 1.08, m = s / 2 + 30;
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const pts = [];
+      let tries = 0;
+      while (pts.length < n && tries < 2000) {
+        tries++;
+        const p = { x: rnd(m, 1000 - m), y: rnd(m, 1000 - m), s };
+        if (pts.every(q => Math.hypot(q.x - p.x, q.y - p.y) >= minD)) pts.push(p);
+      }
+      if (pts.length === n) return pts;
+    }
+    return fiveRows(n);
+  }
+
+  function layoutFor(n) {
+    if (settings.layout === 'scatter') return scatter(n);
+    if (n === 1) return dice(1);
+    const opts = n <= 6 ? [dice, fiveRows, pairs] : [fiveRows, pairs];
+    return pick(opts)(n);
+  }
+
+  // ---------- Zeichnen ----------
+  const NS = 'http://www.w3.org/2000/svg';
+  function useEl(id, x, y, s, rot, color) {
+    const u = document.createElementNS(NS, 'use');
+    u.setAttribute('href', '#o-' + id);
+    u.setAttribute('x', x - s / 2); u.setAttribute('y', y - s / 2);
+    u.setAttribute('width', s); u.setAttribute('height', s);
+    if (rot) u.setAttribute('transform', `rotate(${rot.toFixed(1)} ${x} ${y})`);
+    if (color) u.style.color = color;
+    return u;
+  }
+
+  function drawStart() {
+    scene.replaceChildren();
+    scene.appendChild(useEl('leaf', 500, 430, 520, -10, '#E8742A'));
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', 500); t.setAttribute('y', 860);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('font-size', 96); t.setAttribute('font-weight', 700);
+    t.setAttribute('font-family', 'Andika, Comic Sans MS, sans-serif');
+    t.setAttribute('fill', '#2A2420');
+    t.textContent = "Los geht's!";
+    scene.appendChild(t);
+  }
+
+  function drawBack() {
+    const b = document.getElementById('backsvg');
+    const spots = [[130,140,170,-20],[420,90,130,25],[760,150,190,40],[880,430,140,-35],[110,520,150,60],
+                   [820,760,180,15],[560,880,150,-50],[200,840,190,30],[300,330,110,80],[700,640,110,-15]];
+    spots.forEach(([x, y, s, r]) => b.appendChild(useEl('leaf', x, y, s, r, '#EFA061')));
+    b.querySelectorAll('use').forEach(u => u.setAttribute('opacity', '.55'));
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', 500); c.setAttribute('cy', 500); c.setAttribute('r', 190);
+    c.setAttribute('fill', '#FFF8EE'); c.setAttribute('stroke', '#2A2420'); c.setAttribute('stroke-width', 8);
+    b.appendChild(c);
+    const q = document.createElementNS(NS, 'text');
+    q.setAttribute('x', 500); q.setAttribute('y', 590); q.setAttribute('text-anchor', 'middle');
+    q.setAttribute('font-size', 270); q.setAttribute('font-weight', 700);
+    q.setAttribute('font-family', 'Andika, Comic Sans MS, sans-serif'); q.setAttribute('fill', '#B8541A');
+    q.textContent = '?';
+    b.appendChild(q);
+  }
+
+  let lastN = 0, lastObj = '', lastColor = '';
+  function drawRound() {
+    const max = Number(settings.max);
+    let n;
+    do { n = 1 + Math.floor(Math.random() * max); } while (n === lastN && max > 1);
+    lastN = n;
+    let obj;
+    do { obj = pick(OBJECTS); } while (obj.id === lastObj);
+    lastObj = obj.id;
+    let bg;
+    do { bg = pick(CARD_COLORS); } while (bg === lastColor);
+    lastColor = bg;
+    front.style.backgroundColor = bg;
+
+    const color = obj.colors ? pick(obj.colors) : null;
+    const pts = layoutFor(n);
+    scene.replaceChildren(...pts.map(p => useEl(obj.id, p.x, p.y, p.s, rnd(-obj.tilt, obj.tilt), color)));
+  }
+
+  // ---------- Ablauf ----------
+  let state = 'start'; // start | flash | hidden | reveal
+  let busy = false;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const showing = () => inner.classList.contains('flipped') ? 'back' : 'front';
+  async function flipTo(side) {
+    if (showing() === side) return;
+    inner.classList.toggle('flipped', side === 'back');
+    await sleep(reduce ? 170 : FLIP_MS);
+  }
+  function setHint() {
+    hint.textContent = {
+      start: "Klick: Los geht's!",
+      flash: 'Schau genau hin!',
+      hidden: settings.reveal === 'on' ? 'Wie viele waren es? · Klick: nachschauen' : 'Wie viele waren es? · Klick: weiter',
+      reveal: 'Klick: nächstes Bild',
+    }[state];
+  }
+
+  async function flash() {
+    await flipTo('front');
+    state = 'flash'; setHint();
+    await sleep(Number(settings.time));
+    await flipTo('back');
+    state = 'hidden'; setHint();
+  }
+
+  async function newRound() {
+    busy = true;
+    await flipTo('back');
+    drawRound();
+    await flash();
+    busy = false;
+  }
+
+  async function advance() {
+    if (busy) return;
+    if (state === 'start' || state === 'reveal') return newRound();
+    if (state === 'hidden') {
+      if (settings.reveal === 'on') {
+        busy = true;
+        await flipTo('front');
+        state = 'reveal'; setHint();
+        busy = false;
+      } else newRound();
+    }
+  }
+
+  async function again() {
+    if (busy || (state !== 'hidden' && state !== 'reveal')) return;
+    busy = true;
+    await flipTo('back');
+    await sleep(250);
+    await flash();
+    busy = false;
+  }
+
+  stage.addEventListener('click', advance);
+  document.getElementById('again').addEventListener('click', e => { e.currentTarget.blur(); again(); });
+  document.addEventListener('keydown', e => {
+    const onButton = document.activeElement && document.activeElement.tagName === 'BUTTON';
+    if (['ArrowRight', 'PageDown', 'ArrowDown'].includes(e.key) ||
+        ((e.key === ' ' || e.key === 'Enter') && !onButton)) {
+      e.preventDefault(); advance();
+    } else if (e.key === 'r' || e.key === 'R' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault(); again();
+    }
+  });
+
+  const fsBtn = document.getElementById('fs');
+  fsBtn.addEventListener('click', () => {
+    fsBtn.blur();
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else { const p = document.documentElement.requestFullscreen?.(); if (p) p.catch(() => {}); }
+    } catch (e) {}
+  });
+  document.addEventListener('fullscreenchange', () => {
+    fsBtn.textContent = document.fullscreenElement ? 'Vollbild beenden' : 'Vollbild';
+  });
+
+  drawStart();
+  drawBack();
+  setHint();
+})();
+</script>
+</body>
+</html>
